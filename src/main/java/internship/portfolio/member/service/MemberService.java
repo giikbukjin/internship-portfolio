@@ -2,7 +2,7 @@ package internship.portfolio.member.service;
 
 import internship.portfolio.jwt.JwtToken;
 import internship.portfolio.jwt.JwtTokenProvider;
-import internship.portfolio.member.MemberRepository;
+import internship.portfolio.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;

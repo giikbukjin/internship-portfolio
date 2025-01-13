@@ -17,7 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-public class WebSecurityConfig {
+public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Bean
@@ -28,12 +28,14 @@ public class WebSecurityConfig {
             .csrf(AbstractHttpConfigurer::disable) // csrf 보안 사용 X
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 사용 X
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/favicon.ico", "/h2-console/**").permitAll()
-                .anyRequest().authenticated()
+                    .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/favicon.ico", "/h2-console/**").permitAll()
+                    .requestMatchers("/members/sign-in").permitAll()
+                    .requestMatchers("/members/test").hasRole("USER")
+                    .anyRequest().authenticated()
             );
         // JwtAuthenticationFilter가 UsernamePasswordAuthenticationFilter보다 먼저 실행되도록 설정
         httpSecurity.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
-                UsernamePasswordAuthenticationFilter.class).build();
+                UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
     }
 
