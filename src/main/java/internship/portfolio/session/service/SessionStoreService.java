@@ -7,5 +7,7 @@ public interface SessionStoreService {
 
     Session getSession(String sessionId);
 
+    boolean isSessionValid(Session session);
+
     void deleteSession(String sessionId);
 }

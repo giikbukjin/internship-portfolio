@@ -2,6 +2,8 @@ package internship.portfolio.jwt;
 
 import internship.portfolio.common.ApiException;
 import internship.portfolio.common.ExceptionEnum;
+import internship.portfolio.session.entity.Session;
+import internship.portfolio.session.service.SessionStoreService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -24,9 +26,11 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
     // JWT 서명을 위한 Key 객체 선언
     private final Key key;
+    private final SessionStoreService sessionStoreService;
 
     // 생성자 통해 Key 초기화. jwt.secret 가져와서 secretKey에 저장
-    public JwtTokenProvider(@Value("${jwt.secret}") String secretKey) {
+    public JwtTokenProvider(@Value("${jwt.secret}") String secretKey, SessionStoreService sessionStoreService) {
+        this.sessionStoreService = sessionStoreService;
         // BASE64로 인코딩된 secretKey 디코딩
         byte[] keyBites = Decoders.BASE64.decode(secretKey);
         // 디코딩된 secretKey 이용해 Key 객체 생성
@@ -103,7 +107,7 @@ public class JwtTokenProvider {
     // JWT 파싱해 유효성 검증
     public boolean validateToken(String token) {
         try {
-            // 유효한 토큰일 경우 true 반환
+            // 토큰이 변조되었거나 만료되었는지 확인
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
         } catch (SecurityException | MalformedJwtException e) {
@@ -112,8 +116,29 @@ public class JwtTokenProvider {
             throw new ApiException(ExceptionEnum.TIMEOUT_TOKEN); // 토큰이 만료된 경우
         } catch (UnsupportedJwtException | IllegalArgumentException e) {
             throw new ApiException(ExceptionEnum.INVALID_TOKEN); // 지원하지 않는 토큰이거나 잘못된 형식의 경우
-        } catch (Exception e){
-            throw new ApiException(ExceptionEnum.INVALID_TOKEN); // 그 외의 경우
+        } catch (Exception e) {
+            throw new ApiException(ExceptionEnum.UNKNOWN_TOKEN_ERROR); // 그 외의 경우
+        }
+    }
+
+    // Token 속 Session 추출해 유효성 검증
+    public boolean validateSession(String token) {
+        try {
+            String sessionId = extractSessionFromToken(token);
+            // Token 속 SessionID가 저장소에 존재하는지 확인
+            Session session = sessionStoreService.getSession(sessionId);
+
+            if (session == null) {
+                throw new ApiException(ExceptionEnum.INVALID_SESSION); // 세션이 없는 경우
+            }
+            if (!sessionStoreService.isSessionValid(session)) {
+                throw new ApiException(ExceptionEnum.TIMEOUT_SESSION); // 세션이 만료된 경우
+            }
+            return true;
+        } catch (ApiException e) {
+            throw e; // ApiException 그대로 던짐
+        } catch (Exception e) {
+            throw new ApiException(ExceptionEnum.UNKNOWN_SESSION_ERROR); // 그 외의 경우
         }
     }
 
@@ -134,5 +159,15 @@ public class JwtTokenProvider {
         } catch (ExpiredJwtException e) {
             return e.getClaims(); // 만료된 토큰의 경우 예외 객체에 포함된 Claim 정보 반환
         }
+    }
+
+    // Token에서 SessionID 추츌
+    private String extractSessionFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("sessionId", String.class);
     }
 }

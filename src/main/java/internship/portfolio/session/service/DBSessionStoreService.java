@@ -33,6 +33,18 @@ public class DBSessionStoreService implements SessionStoreService {
     }
 
     @Override
+    public boolean isSessionValid(Session session) {
+        // 만료일이 현재보다 과거라면 세션이 만료된 것
+        if (session.getExpiresAt().isBefore(LocalDateTime.now())) {
+            System.out.println("FALSE");
+            return false;
+        } else {
+            System.out.println("TRUE");
+            return true;
+        }
+    }
+
+    @Override
     public void deleteSession(String sessionId) {
         sessionRepository.deleteBySessionId(sessionId);
     }
