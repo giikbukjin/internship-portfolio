@@ -3,6 +3,7 @@ package internship.portfolio.member.service;
 import internship.portfolio.jwt.JwtToken;
 import internship.portfolio.jwt.JwtTokenProvider;
 import internship.portfolio.member.repository.MemberRepository;
+import internship.portfolio.refreshToken.service.RefreshTokenStoreService;
 import internship.portfolio.session.service.SessionStoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,9 +16,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class MemberService {
-    private final MemberRepository memberRepository;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenStoreService refreshTokenStoreService;
     private final SessionStoreService sessionService;
 
     // 사용자 로그인
@@ -34,6 +35,9 @@ public class MemberService {
 
         // 인증 정보와 sessionId 기반으로 JWT 생성
         JwtToken jwtToken = jwtTokenProvider.generateToken(authentication, sessionId);
+
+        // 생성된 refreshToken을 저장소에 저장
+        refreshTokenStoreService.saveRefreshToken(jwtToken.getRefreshToken(), authentication.getName());
 
         // 생성된 sessionId를 저장소에 저장
         sessionService.saveSession(sessionId, authentication.getName());
