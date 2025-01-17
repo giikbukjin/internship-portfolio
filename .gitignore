@@ -363,3 +363,6 @@ gradle-app.setting
 *.hprof
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,macos,java,intellij,visualstudiocode,git,maven,eclipse,gradle,netbeans
+
+### env ###
+src/main/resources/properties/env.properties
