@@ -19,6 +19,4 @@ public class Session {
     private String sessionId;
 
     private String username;
-
-    private LocalDateTime expiresAt;
 }

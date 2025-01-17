@@ -126,14 +126,7 @@ public class JwtTokenProvider {
         try {
             String sessionId = extractSessionFromToken(token);
             // Token 속 SessionID가 저장소에 존재하는지 확인
-            Session session = sessionStoreService.getSession(sessionId);
-
-            if (session == null) {
-                throw new ApiException(ExceptionEnum.INVALID_SESSION); // 세션이 없는 경우
-            }
-            if (!sessionStoreService.isSessionValid(session)) {
-                throw new ApiException(ExceptionEnum.TIMEOUT_SESSION); // 세션이 만료된 경우
-            }
+            sessionStoreService.getSession(sessionId);
             return true;
         } catch (ApiException e) {
             throw e; // ApiException 그대로 던짐
