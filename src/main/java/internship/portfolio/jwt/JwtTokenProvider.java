@@ -2,7 +2,6 @@ package internship.portfolio.jwt;
 
 import internship.portfolio.common.ApiException;
 import internship.portfolio.common.ExceptionEnum;
-import internship.portfolio.session.entity.Session;
 import internship.portfolio.session.service.SessionStoreService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -113,7 +112,7 @@ public class JwtTokenProvider {
         } catch (SecurityException | MalformedJwtException e) {
             throw new ApiException(ExceptionEnum.INVALID_TOKEN); // 토큰이 잘못된 경우
         } catch (ExpiredJwtException e) {
-            throw new ApiException(ExceptionEnum.TIMEOUT_TOKEN); // 토큰이 만료된 경우
+            throw new ApiException(ExceptionEnum.TIMEOUT_TOKEN); // 토큰이 만료된 경우 -> AccessToken 재발급
         } catch (UnsupportedJwtException | IllegalArgumentException e) {
             throw new ApiException(ExceptionEnum.INVALID_TOKEN); // 지원하지 않는 토큰이거나 잘못된 형식의 경우
         } catch (Exception e) {

@@ -6,8 +6,6 @@ import internship.portfolio.session.entity.Session;
 import internship.portfolio.session.repository.SessionRepository;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-
 @Component
 public class DBSessionStoreService implements SessionStoreService {
     private final SessionRepository sessionRepository;
@@ -17,11 +15,12 @@ public class DBSessionStoreService implements SessionStoreService {
     }
 
     @Override
-    public void saveSession(String sessionId, String username) {
+    public void saveSession(String sessionId, String username, String refreshToken) {
         Session session = new Session();
 
         session.setSessionId(sessionId);
         session.setUsername(username);
+        session.setRefreshToken(refreshToken);
 
         sessionRepository.save(session);
     }
@@ -35,5 +34,16 @@ public class DBSessionStoreService implements SessionStoreService {
     @Override
     public void deleteSession(String sessionId) {
         sessionRepository.deleteBySessionId(sessionId);
+    }
+
+    @Override
+    public Session getRefreshToken(String refreshToken) {
+        return sessionRepository.findByRefreshToken(refreshToken)
+                .orElseThrow(() -> new ApiException(ExceptionEnum.INVALID_TOKEN));
+    }
+
+    @Override
+    public void deleteRefreshToken(String refreshToken) {
+        sessionRepository.deleteByRefreshToken(refreshToken);
     }
 }

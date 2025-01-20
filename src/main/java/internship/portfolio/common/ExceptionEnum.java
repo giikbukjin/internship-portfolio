@@ -9,7 +9,7 @@ public enum ExceptionEnum {
     TIMEOUT_TOKEN("Token expired"),
     UNKNOWN_TOKEN_ERROR("Unknown token error"),
 
-    INVALID_SESSION("Invalid session"),
+    INVALID_SESSION("Session not found"),
     UNKNOWN_SESSION_ERROR("Unknown session error"),
     ;
 
