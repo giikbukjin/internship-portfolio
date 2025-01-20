@@ -18,7 +18,8 @@ public class Session {
 
     private String sessionId;
 
-    private String username;
+    private String username; // 사용자 ID
 
-    private LocalDateTime expiresAt;
+    @Column(columnDefinition = "TEXT")
+    private String refreshToken;
 }

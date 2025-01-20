@@ -2,7 +2,7 @@ package internship.portfolio.member.controller;
 
 import internship.portfolio.common.SecurityUtil;
 import internship.portfolio.jwt.JwtToken;
-import internship.portfolio.member.dto.SignInDto;
+import internship.portfolio.member.dto.LoginDto;
 import internship.portfolio.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,11 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController {
     private final MemberService memberService;
 
-    @PostMapping("/sign-in")
-    public JwtToken signIn(@RequestBody SignInDto signInDto) {
-        String username = signInDto.getUsername();
-        String password = signInDto.getPassword();
-        JwtToken jwtToken = memberService.signIn(username, password);
+    @PostMapping("/login")
+    public JwtToken login(@RequestBody LoginDto loginDto) {
+        String username = loginDto.getUsername();
+        String password = loginDto.getPassword();
+        JwtToken jwtToken = memberService.login(username, password);
 
         log.info("request username = {}, password = {}", username, password);
         log.info("jwtToken accessToken = {}, refreshToken = {}", jwtToken.getAccessToken(), jwtToken.getRefreshToken());

@@ -2,7 +2,6 @@ package internship.portfolio.jwt;
 
 import internship.portfolio.common.ApiException;
 import internship.portfolio.common.ExceptionEnum;
-import internship.portfolio.session.entity.Session;
 import internship.portfolio.session.service.SessionStoreService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -37,7 +36,7 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(keyBites);
     }
 
-    // 사용자 정보 이용해 AccessToken, RefreshToken 생성
+    // 로그인 시 사용자 정보 이용해 AccessToken, RefreshToken 생성
     public JwtToken generateToken(Authentication authentication, String sessionId) {
         // 권한 가져오기
         String authorities = authentication.getAuthorities().stream()
@@ -48,17 +47,7 @@ public class JwtTokenProvider {
         Date issuedAt = new Date(); // 토큰 발급 시각 저장
 
         // AccessToken 생성
-        String accessToken = Jwts.builder()
-                .setHeader(createHeaders()) // Header 설정
-                .setSubject("accessToken") // 토큰 주제 설정
-                .claim("iss", "off") // 토큰 발급자 설정
-                .claim("aud", authentication.getName()) // 토큰 대상자 설정
-                .claim("auth", authorities) // 사용자 권한 설정
-                .claim("sessionId", sessionId) // sessionId 추가
-                .setExpiration(new Date(now + 1800000)) // 토큰 만료 시간 설정 (30분)
-                .setIssuedAt(issuedAt) // 토큰 발급 시각 설정
-                .signWith(key, SignatureAlgorithm.HS512) // 서명 알고리즘 설정
-                .compact();
+        String accessToken = generateAccessToken(authentication, sessionId);
 
         // RefreshToken 생성
         String refreshToken = Jwts.builder()
@@ -82,7 +71,29 @@ public class JwtTokenProvider {
                 .build();
     }
 
-    // JWT 디코딩해 정보를 꺼낸 후 Authentication 객체 생성
+    public String generateAccessToken(Authentication authentication, String sessionId) {
+        String authorities = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
+
+        long now = new Date().getTime(); // 현재 시각 가져오기
+        Date issuedAt = new Date(); // 토큰 발급 시각 저장
+
+        // AccessToken 생성
+        return Jwts.builder()
+                .setHeader(createHeaders()) // Header 설정
+                .setSubject("accessToken") // 토큰 주제 설정
+                .claim("iss", "off") // 토큰 발급자 설정
+                .claim("aud", authentication.getName()) // 토큰 대상자 설정
+                .claim("auth", authorities) // 사용자 권한 설정
+                .claim("sessionId", sessionId) // sessionId 추가
+                .setExpiration(new Date(now + 1800000)) // 토큰 만료 시간 설정 (30분)
+                .setIssuedAt(issuedAt) // 토큰 발급 시각 설정
+                .signWith(key, SignatureAlgorithm.HS512) // 서명 알고리즘 설정
+                .compact();
+    }
+
+        // JWT 디코딩해 정보를 꺼낸 후 Authentication 객체 생성
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token); // JWT 디코딩
 
@@ -113,7 +124,7 @@ public class JwtTokenProvider {
         } catch (SecurityException | MalformedJwtException e) {
             throw new ApiException(ExceptionEnum.INVALID_TOKEN); // 토큰이 잘못된 경우
         } catch (ExpiredJwtException e) {
-            throw new ApiException(ExceptionEnum.TIMEOUT_TOKEN); // 토큰이 만료된 경우
+            throw new ApiException(ExceptionEnum.TIMEOUT_TOKEN); // 토큰이 만료된 경우 -> AccessToken 재발급
         } catch (UnsupportedJwtException | IllegalArgumentException e) {
             throw new ApiException(ExceptionEnum.INVALID_TOKEN); // 지원하지 않는 토큰이거나 잘못된 형식의 경우
         } catch (Exception e) {
@@ -126,14 +137,7 @@ public class JwtTokenProvider {
         try {
             String sessionId = extractSessionFromToken(token);
             // Token 속 SessionID가 저장소에 존재하는지 확인
-            Session session = sessionStoreService.getSession(sessionId);
-
-            if (session == null) {
-                throw new ApiException(ExceptionEnum.INVALID_SESSION); // 세션이 없는 경우
-            }
-            if (!sessionStoreService.isSessionValid(session)) {
-                throw new ApiException(ExceptionEnum.TIMEOUT_SESSION); // 세션이 만료된 경우
-            }
+            sessionStoreService.getSession(sessionId);
             return true;
         } catch (ApiException e) {
             throw e; // ApiException 그대로 던짐

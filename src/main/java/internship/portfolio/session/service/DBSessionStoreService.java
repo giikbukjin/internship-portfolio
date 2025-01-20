@@ -1,10 +1,10 @@
 package internship.portfolio.session.service;
 
+import internship.portfolio.common.ApiException;
+import internship.portfolio.common.ExceptionEnum;
 import internship.portfolio.session.entity.Session;
 import internship.portfolio.session.repository.SessionRepository;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDateTime;
 
 @Component
 public class DBSessionStoreService implements SessionStoreService {
@@ -15,13 +15,12 @@ public class DBSessionStoreService implements SessionStoreService {
     }
 
     @Override
-    public void saveSession(String sessionId, String username) {
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(2);
+    public void saveSession(String sessionId, String username, String refreshToken) {
         Session session = new Session();
 
         session.setSessionId(sessionId);
         session.setUsername(username);
-        session.setExpiresAt(expiresAt);
+        session.setRefreshToken(refreshToken);
 
         sessionRepository.save(session);
     }
@@ -29,23 +28,22 @@ public class DBSessionStoreService implements SessionStoreService {
     @Override
     public Session getSession(String sessionId) {
         return sessionRepository.findBySessionId(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid sessionId"));
-    }
-
-    @Override
-    public boolean isSessionValid(Session session) {
-        // 만료일이 현재보다 과거라면 세션이 만료된 것
-        if (session.getExpiresAt().isBefore(LocalDateTime.now())) {
-            System.out.println("FALSE");
-            return false;
-        } else {
-            System.out.println("TRUE");
-            return true;
-        }
+                .orElseThrow(() -> new ApiException(ExceptionEnum.INVALID_SESSION));
     }
 
     @Override
     public void deleteSession(String sessionId) {
         sessionRepository.deleteBySessionId(sessionId);
+    }
+
+    @Override
+    public Session getRefreshToken(String refreshToken) {
+        return sessionRepository.findByRefreshToken(refreshToken)
+                .orElseThrow(() -> new ApiException(ExceptionEnum.INVALID_TOKEN));
+    }
+
+    @Override
+    public void deleteRefreshToken(String refreshToken) {
+        sessionRepository.deleteByRefreshToken(refreshToken);
     }
 }
