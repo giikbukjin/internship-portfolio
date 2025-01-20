@@ -29,7 +29,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 사용 X
             .authorizeHttpRequests(authorize -> authorize
                     .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/favicon.ico", "/h2-console/**").permitAll()
-                    .requestMatchers("/members/sign-in").permitAll()
+                    .requestMatchers("/members/login", "/jwt/reissue/access-token").permitAll()
                     .requestMatchers("/members/test").hasRole("USER")
                     .anyRequest().authenticated()
             );

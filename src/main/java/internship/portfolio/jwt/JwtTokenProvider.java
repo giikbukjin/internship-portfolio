@@ -36,7 +36,7 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(keyBites);
     }
 
-    // 사용자 정보 이용해 AccessToken, RefreshToken 생성
+    // 로그인 시 사용자 정보 이용해 AccessToken, RefreshToken 생성
     public JwtToken generateToken(Authentication authentication, String sessionId) {
         // 권한 가져오기
         String authorities = authentication.getAuthorities().stream()
@@ -47,17 +47,7 @@ public class JwtTokenProvider {
         Date issuedAt = new Date(); // 토큰 발급 시각 저장
 
         // AccessToken 생성
-        String accessToken = Jwts.builder()
-                .setHeader(createHeaders()) // Header 설정
-                .setSubject("accessToken") // 토큰 주제 설정
-                .claim("iss", "off") // 토큰 발급자 설정
-                .claim("aud", authentication.getName()) // 토큰 대상자 설정
-                .claim("auth", authorities) // 사용자 권한 설정
-                .claim("sessionId", sessionId) // sessionId 추가
-                .setExpiration(new Date(now + 1800000)) // 토큰 만료 시간 설정 (30분)
-                .setIssuedAt(issuedAt) // 토큰 발급 시각 설정
-                .signWith(key, SignatureAlgorithm.HS512) // 서명 알고리즘 설정
-                .compact();
+        String accessToken = generateAccessToken(authentication, sessionId);
 
         // RefreshToken 생성
         String refreshToken = Jwts.builder()
@@ -81,7 +71,29 @@ public class JwtTokenProvider {
                 .build();
     }
 
-    // JWT 디코딩해 정보를 꺼낸 후 Authentication 객체 생성
+    public String generateAccessToken(Authentication authentication, String sessionId) {
+        String authorities = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
+
+        long now = new Date().getTime(); // 현재 시각 가져오기
+        Date issuedAt = new Date(); // 토큰 발급 시각 저장
+
+        // AccessToken 생성
+        return Jwts.builder()
+                .setHeader(createHeaders()) // Header 설정
+                .setSubject("accessToken") // 토큰 주제 설정
+                .claim("iss", "off") // 토큰 발급자 설정
+                .claim("aud", authentication.getName()) // 토큰 대상자 설정
+                .claim("auth", authorities) // 사용자 권한 설정
+                .claim("sessionId", sessionId) // sessionId 추가
+                .setExpiration(new Date(now + 1800000)) // 토큰 만료 시간 설정 (30분)
+                .setIssuedAt(issuedAt) // 토큰 발급 시각 설정
+                .signWith(key, SignatureAlgorithm.HS512) // 서명 알고리즘 설정
+                .compact();
+    }
+
+        // JWT 디코딩해 정보를 꺼낸 후 Authentication 객체 생성
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token); // JWT 디코딩
 

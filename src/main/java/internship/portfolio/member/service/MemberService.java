@@ -19,7 +19,7 @@ public class MemberService {
     private final SessionStoreService sessionService;
 
     // 사용자 로그인
-    public JwtToken signIn(String username, String password) {
+    public JwtToken login(String username, String password) {
         String sessionId = UUID.randomUUID().toString(); // sessionId 생성
 
         // username, password 이용해 Authentication 객체 생성
